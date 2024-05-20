@@ -71,7 +71,7 @@ Nous avons ajouté deux intercepteurs Axios pour gérer les tokens nécessaires 
 ```javascript
 const xsrfToken = useSelector(state => state.xsrfToken);
 instance.interceptors.response.use((response) => {    
-  if (response && response.data) {
+  if (response && response.data && (response.data.xsrfToken || response.data.additionalData?.xsrfToken)) {
       const token = response.data.xsrfToken || response.data.additionalData?.xsrfToken;
       
       if (token || xsrfToken) {
