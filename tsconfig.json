@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+      "allowJs": true,
+      "baseUrl": ".",
+      "target": "es2017",
+      "module": "commonjs",
+      "lib": ["esnext"],
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "strict": true,
+      "strictNullChecks": true,
+      "resolveJsonModule": true,
+      "skipDefaultLibCheck": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "outDir": "dist",
+      "strictPropertyInitialization": false
+    },
+    "include": [
+      "app/**/*.ts",
+    //   "app/config/gc-keys.json"
+    ],
+    "exclude": [
+      "dist"
+    ],
+    // "ts-node": {
+    //   "require": [
+    //     "tsconfig-paths/register"
+    //   ]
+    // }
+  }
+  
