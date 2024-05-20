@@ -1,7 +1,7 @@
 ### Sélectionner la langue :
 
 [![Français](https://img.shields.io/badge/Langue-Fran%C3%A7ais-blue.svg)](#fran%C3%A7ais)
-[![English](https://img.shields.io/badge/Langue-Anglais-red.svg)](#anglais)
+[![English](https://img.shields.io/badge/Langue-Anglais-red.svg)](#English)
 
 ### Français
 # HarmonyStack-API-Node
