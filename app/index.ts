@@ -12,6 +12,7 @@ import passport from 'passport';
 import '../passport-config'; 
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import helmet from 'helmet';
 
 export const app: Application = express();
 
@@ -22,8 +23,26 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,
 }));
+//Sécurisation des en-têtes HTTP et faille XSS
+app.use(helmet(
+  {
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: true,
+    crossOriginResourcePolicy: true,
+    dnsPrefetchControl: true,
+    frameguard: true,
+    hidePoweredBy: true,
+    hsts: true,
+    ieNoOpen: true,
+    noSniff: true,
+    permittedCrossDomainPolicies: true,
+    referrerPolicy: true,
+    xssFilter: true,
+  }
+));
 app.use(express.urlencoded({ extended: true }));
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const server = http.createServer(app);
 

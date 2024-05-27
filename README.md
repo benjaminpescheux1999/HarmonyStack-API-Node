@@ -3,6 +3,7 @@
 [![Français](https://img.shields.io/badge/Langue-Fran%C3%A7ais-blue.svg)](#fran%C3%A7ais)
 [![English](https://img.shields.io/badge/Langue-Anglais-red.svg)](#English)
 
+
 ### Français
 # HarmonyStack-API-Node
 
@@ -12,6 +13,26 @@ Une pile technologique harmonieuse, offrant une compatibilité totale entre les 
 
 ### Description
 Cette release introduit les fonctionnalités d'authentification sécurisée pour le projet HarmonyStack, ainsi que les explications sur son fonctionnement.
+
+## Feuille de Route
+
+### Fonctionnalités en Développement 🚧
+- [ ] Amélioration de la Stratégie d'Authentification 🚧
+  - Optimisation des mécanismes d'authentification pour renforcer la sécurité et améliorer l'expérience utilisateur.
+
+- [ ] Gestion de l'Utilisateur 🚧
+  - Mise à jour des informations utilisateur sur la page de profil pour permettre une personnalisation et une gestion plus intuitive.
+
+### Fonctionnalités à Venir 🌟
+- [ ] Intégration Swagger
+  - Ajout de Swagger pour la documentation des API afin de faciliter le développement et les tests.
+  
+- [ ] Intégration de l'Inscription
+  - Implémentation de la fonctionnalité d'inscription pour permettre aux nouveaux utilisateurs de créer un compte.
+  
+- [ ] Intégration de la Sécurité
+  - Vérification de compte pour renforcer la sécurité, y compris la mise en œuvre de la vérification par email et d'autres méthodes d'authentification.
+
 
 ### Fonctionnalités principales :
 - Implémentation de deux stratégies d'authentification : Fusion des tokens et Refresh token.
@@ -46,55 +67,57 @@ Voici comment cela fonctionne :
 
 
 ### Intercepteurs Axios pour la gestion des Tokens
-Nous avons ajouté deux intercepteurs Axios pour gérer les tokens nécessaires à l'authentification :
-1. **Intercepteur pour le Refresh Token :**
+Nous avons ajouté un intercepteur Axios pour gérer les tokens nécessaires à l'authentification :
+**Intercepteur pour le Refresh Token & XSRF Token:**
 ```javascript
-  instance.interceptors.response.use((response) => {
-    return response;
-  }, async (error) => {
-    const originalRequest = error.config; // Get the original request
-    if (originalRequest && error.config.url !== '/refresh-token' && error.response.status === 401 && originalRequest._retry !== true) {
-      originalRequest._retry = true; // Avoid infinite loops 
-      if(!xsrfToken || xsrfToken === '') {
-        console.warn('xsrfToken not found');
-        // strategy error
-        return;
-      }
-  
-      await instance.post('/refresh-token')
-      .then((response) => {
-      }).catch((error) => {
-        console.warn(error.response.status);
-        // strategy error
-      });
-      return instance(originalRequest);
-    }
-  });
-````
-
-2. **Intercepteur pour le XSRF Token :**
-
-```javascript
-const xsrfToken = useSelector(state => state.xsrfToken);
-instance.interceptors.response.use((response) => {    
-  if (response && response.data && (response.data.xsrfToken || response.data.additionalData?.xsrfToken)) {
-      const token = response.data.xsrfToken || response.data.additionalData?.xsrfToken;
-      
-      if (token || xsrfToken) {
-          // localStorage xsrfToken Redux
-          dispatch({
+      const [xsrfToken, setXsrfToken] = useState(useSelector(state => state.xsrfToken.xsrfToken));
+      instance.defaults.headers['x-xsrf-token'] = xsrfToken;
+    
+      // Intercepteur pour gérer xsrfToken et les erreurs 401
+      instance.interceptors.response.use(
+        async (response) => {
+          // Gestion du xsrfToken
+          const token = response.data.xsrfToken || response.data.additionalData?.xsrfToken;
+          if (token) {
+            dispatch({
               type: 'UPDATE_XSRF',
               payload: token
-          });
-          instance.defaults.headers['x-xsrf-token'] = token || xsrfToken;
-      } else {
-          console.warn("Pas de xsrfToken dans la réponse:", response.data);
-      }
-    }
-  return response;
-}, (error) => {
-    return Promise.reject(error);
-});
+            });
+            setXsrfToken(token);
+            instance.defaults.headers['x-xsrf-token'] = token;
+          } else if (!token && xsrfToken && !instance.defaults.headers['x-xsrf-token']) {
+            console.warn("Récupération du token depuis redux");
+            instance.defaults.headers['x-xsrf-token'] = xsrfToken; 
+          } else if (!token && !xsrfToken && !instance.defaults.headers['x-xsrf-token']){
+            console.warn("Aucun xsrfToken trouvé dans la réponse.");
+          }
+          return response;
+        },
+        async (error) => {
+          if (error.response && error.response.status === 401 && error.config.url !== '/refresh-token') {
+            const originalRequest = error.config;
+            if (!originalRequest._retry) {
+              originalRequest._retry = true;
+              try {
+                const refreshResponse = await instance.post('/refresh-token');
+                const newToken = refreshResponse.data.xsrfToken;
+                dispatch({
+                  type: 'UPDATE_XSRF',
+                  payload: newToken
+                });
+                setXsrfToken(newToken);
+                instance.defaults.headers['x-xsrf-token'] = newToken;
+                originalRequest.headers['x-xsrf-token'] = newToken;
+                return instance(originalRequest);
+              } catch (refreshError) {
+                console.error("Échec de la récupération du token :", refreshError.response.status);
+                return Promise.reject(refreshError);
+              }
+            }
+          }
+          return Promise.reject(error);
+        }
+      );
 ````
 
 ### Configuration du fichier .env
@@ -184,6 +207,27 @@ A harmonious technology stack, offering full compatibility between different lay
 ### Description
 This release introduces secure authentication features for the HarmonyStack project, along with explanations of its operation.
 
+## Roadmap
+
+### Features in Development 🚧
+- [ ] Authentication Strategy Improvement 🚧
+  - Optimization of authentication mechanisms to enhance security and improve user experience.
+
+- [ ] User Management 🚧
+  - Updating user information on the profile page to enable more intuitive customization and management.
+
+### Upcoming Features 🌟
+- [ ] Swagger Integration
+  - Adding Swagger for API documentation to facilitate development and testing.
+  
+- [ ] Signup Integration
+  - Implementing the signup feature to allow new users to create an account.
+  
+- [ ] Security Integration
+  - Account verification to enhance security, including the implementation of email verification and other authentication methods.
+
+
+
 ### Key Features:
 - Implementation of two authentication strategies: Token Fusion and Refresh Token.
 - Secure token storage management to prevent XSS vulnerabilities and CSRF/XSRF attacks.
@@ -214,54 +258,59 @@ Here's how it works:
 - We have set up a specific Axios interceptor to handle the refresh of the authentication token upon expiration.
 
 ### Axios Interceptors for Token Management
-We have added two Axios interceptors to manage the tokens necessary for authentication:
-1. **Interceptor for Refresh Token:** 
+We have added an Axios interceptor to manage the tokens required for authentication:
+**Interceptor for Refresh Token & XSRF Token:**
 ```javascript
-  instance.interceptors.response.use((response) => {
-    return response;
-  }, async (error) => {
-    const originalRequest = error.config; // Get the original request
-    if (originalRequest && error.config.url !== '/refresh-token' && error.response.status === 401 && originalRequest._retry !== true) {
-      originalRequest._retry = true; // Avoid infinite loops 
-      if(!xsrfToken || xsrfToken === '') {
-        console.warn('xsrfToken not found');
-        // strategy error
-        return;
-      }
-  
-      await instance.post('/refresh-token')
-      .then((response) => {
-      }).catch((error) => {
-        console.warn(error.response.status);
-        // strategy error
-      });
-      return instance(originalRequest);
-    }
-  });
-````
-2. **Interceptor for the XSRF Token:**
-```javascript
-const xsrfToken = useSelector(state => state.xsrfToken);
-instance.interceptors.response.use((response) => {    
-  if (response && response.data && (response.data.xsrfToken || response.data.additionalData?.xsrfToken)) {
+  const [xsrfToken, setXsrfToken] = useState(useSelector(state => state.xsrfToken.xsrfToken));
+  instance.defaults.headers['x-xsrf-token'] = xsrfToken;
+
+  // Interceptor to handle xsrfToken and 401 errors
+  instance.interceptors.response.use(
+    async (response) => {
+      // Handling the xsrfToken
       const token = response.data.xsrfToken || response.data.additionalData?.xsrfToken;
-      
-      if (token || xsrfToken) {
-          // localStorage xsrfToken Redux
-          dispatch({
-              type: 'UPDATE_XSRF',
-              payload: token
-          });
-          instance.defaults.headers['x-xsrf-token'] = token || xsrfToken;
-      } else {
-          console.warn("Pas de xsrfToken dans la réponse:", response.data);
+      if (token) {
+        dispatch({
+          type: 'UPDATE_XSRF',
+          payload: token
+        });
+        setXsrfToken(token);
+        instance.defaults.headers['x-xsrf-token'] = token;
+      } else if (!token && xsrfToken && !instance.defaults.headers['x-xsrf-token']) {
+        console.warn("Token retrieval from redux");
+        instance.defaults.headers['x-xsrf-token'] = xsrfToken; 
+      } else if (!token && !xsrfToken && !instance.defaults.headers['x-xsrf-token']){
+        console.warn("No xsrfToken found in the response.");
       }
+      return response;
+    },
+    async (error) => {
+      if (error.response && error.response.status === 401 && error.config.url !== '/refresh-token') {
+        const originalRequest = error.config;
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            const refreshResponse = await instance.post('/refresh-token');
+            const newToken = refreshResponse.data.xsrfToken;
+            dispatch({
+              type: 'UPDATE_XSRF',
+              payload: newToken
+            });
+            setXsrfToken(newToken);
+            instance.defaults.headers['x-xsrf-token'] = newToken;
+            originalRequest.headers['x-xsrf-token'] = newToken;
+            return instance(originalRequest);
+          } catch (refreshError) {
+            console.error("Failed to retrieve the token:", refreshError.response.status);
+            return Promise.reject(refreshError);
+          }
+        }
+      }
+      return Promise.reject(error);
     }
-  return response;
-}, (error) => {
-    return Promise.reject(error);
-});
+  );
 ````
+
 
 ### Configuration of the .env File
 

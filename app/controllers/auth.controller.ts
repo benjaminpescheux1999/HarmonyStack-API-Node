@@ -12,19 +12,18 @@ dotenv.config(); // Charger les variables d'environnement
 
 // const stripeInstance = new stripe(String(process.env.STRIPE_SECRET_KEY));
 
-
 export const createUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, lastname, email, password } = req.body;
         
         if (!username || !lastname || !email || !password) {
-            res.status(400).json({ error: 'Tous les champs sont requis' });
+            res.status(400).send({ error: 'Tous les champs sont requis' });
             return;
         }
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            res.status(400).json({ error: 'Cet email est déjà utilisé' });
+            res.status(400).send({ error: 'Cet email est déjà utilisé' });
             return;
         }
 
@@ -39,20 +38,20 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
         const savedUser = await newUser.save();
         
-        res.status(201).json(savedUser);
+        res.status(201).send(savedUser);
     } catch (error) {
         console.error('Erreur lors de la création de l\'utilisateur :', error);
-        res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur' });
+        res.status(500).send({ error: 'Erreur lors de la création de l\'utilisateur' });
     }
 };
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate('local', { session: false }, async (err: Error, user: { _id: string; }, info: { message: any; }) => {
         if (err) {
-            return res.status(500).json({ error: 'Erreur lors de l\'authentification' });
+            return res.status(500).send({ error: 'Erreur lors de l\'authentification' });
         }
         if (!user) {
-            return res.status(400).json({ error: info && info.message ? info.message : 'Échec de l\'authentification' });
+            return res.status(400).send({ error: info && info.message ? info.message : 'Échec de l\'authentification' });
         }
 
         /* On créer le token CSRF */
@@ -94,49 +93,54 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 };
 
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
-    const { cookies } = req;
-    if(!cookies || !cookies.refresh_token) {
-        return res.status(401).json({ message: 'Refresh token is required' });
-    }
-    const refreshToken = cookies.refresh_token;
-    
-    const validrefresh = await RefreshToken.findOne({ refreshToken });
-    if (!validrefresh) {
-        return res.status(401).json({ message: 'Invalid refresh token' });
-    }    
-    
-    if(!validrefresh.userId && !validrefresh.expiresAt || (validrefresh.expiresAt && validrefresh.expiresAt < new Date())) {
-        return res.status(401).json({ message: 'Invalid refresh token' });
-    }
-    
-    /* On créer le token CSRF */
-    const xsrfToken = await generateXsrfToken();
-    const NewRefreshToken = await generateBase64RefreshToken();
-    const accessToken = jwt.sign({ sub: String(validrefresh.userId), xsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
-    //add refresh token 
-    const query = { userId: validrefresh.userId };
-    const update = { $set: { refreshToken: NewRefreshToken, expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }};
-    const options = { upsert: true };
-    await RefreshToken.updateOne(query, update, options);
+    try {
+        const { cookies } = req;
+        if (!cookies || !cookies.refresh_token) {
+            return res.status(401).send({ message: 'Un token de rafraîchissement est requis' });
+        }
+        const refreshToken = cookies.refresh_token;
+        console.log("refreshToken",refreshToken);
+        const validrefresh = await RefreshToken.findOne({ refreshToken });
+        if (!validrefresh) {
+            return res.status(401).send({ message: 'Token de rafraîchissement invalide' });
+        }    
+        
+        if (!validrefresh.userId || !validrefresh.expiresAt || (validrefresh.expiresAt && validrefresh.expiresAt < new Date())) {
+            return res.status(401).send({ message: 'Token de rafraîchissement invalide ou expiré' });
+        }
+        
+        /* On créer le token CSRF */
+        const xsrfToken = await generateXsrfToken();
+        const NewRefreshToken = await generateBase64RefreshToken();
+        const accessToken = jwt.sign({ sub: String(validrefresh.userId), xsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
+        //add refresh token 
+        const query = { userId: validrefresh.userId };
+        const update = { $set: { refreshToken: NewRefreshToken, expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }};
+        const options = { upsert: true };
+        await RefreshToken.updateOne(query, update, options);
 
-    /* On créer le cookie contenant le JWT */
-    res.cookie('access_token', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1 * 60 * 60 * 1000, //1 heure
-        sameSite: 'strict',
-        path: '/',
-    }).cookie('refresh_token', NewRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 365 * 24 * 60 * 60 * 1000, //1 an
-        path: '/',
-        sameSite: 'strict'
-    }).send({
-        accessTokenExpiresIn: 24 * 60 * 60 * 1000,
-        refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000,
-        xsrfToken
-    })
+        /* On créer le cookie contenant le JWT */
+        res.cookie('access_token', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1 * 60 * 60 * 1000, //1 heure
+            sameSite: 'strict',
+            path: '/',
+        }).cookie('refresh_token', NewRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 365 * 24 * 60 * 60 * 1000, //1 an
+            path: '/',
+            sameSite: 'strict'
+        }).send({
+            accessTokenExpiresIn: 24 * 60 * 60 * 1000,
+            refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000,
+            xsrfToken
+        });
+    } catch (error) {
+        console.log('Erreur lors du rafraîchissement du token:', error);
+        return res.status(500).send({ message: 'Erreur interne du serveur lors du rafraîchissement du token' });
+    }
 }
 
 export const signup = async (req: Request, res: Response) => {
@@ -144,16 +148,16 @@ export const signup = async (req: Request, res: Response) => {
     console.log("req.body",req.body);
     
     if (!email || !password || !firstname || !lastname || !passwordConfirmation) {
-        return res.status(400).json({ message: 'Tous les champs sont requis' });
+        return res.status(400).send({ message: 'Tous les champs sont requis' });
     }
     if (password !== passwordConfirmation) {
-        return res.status(400).json({ message: 'Les mots de passe ne correspondent pas' });
+        return res.status(400).send({ message: 'Les mots de passe ne correspondent pas' });
     }
 
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Cet email est déjà utilisé' });
+            return res.status(400).send({ message: 'Cet email est déjà utilisé' });
         }
 
         const hashedPassword = await hashPassword(password);
@@ -166,10 +170,10 @@ export const signup = async (req: Request, res: Response) => {
             lastname,
         });
         const savedUser = await newUser.save();
-        return res.status(201).json(savedUser);
+        return res.status(201).send(savedUser);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Erreur lors de la création de l\'utilisateur' });
+        return res.status(500).send({ message: 'Erreur lors de la création de l\'utilisateur' });
     }
 }
 
@@ -185,6 +189,36 @@ export const logout = async (req: Request, res: Response) => {
     }
 }
 
+export const verifyToken = async (req: Request, res: Response) => {
+    try {
+        const accessToken = req.cookies['access_token'];
+        if (!accessToken) {
+            return res.status(401).send({ isValid: false });
+        }
+
+        // Fonction de vérification de l'access token
+        const verifyAccessToken = (accessToken: string, jwtSecret: string): jwt.JwtPayload | null => {
+            try {
+                const decodedToken = jwt.verify(accessToken, jwtSecret) as jwt.JwtPayload;
+                // console.log('Decoded token:', decodedToken);
+                
+                return decodedToken;
+            } catch (error) {
+                return null;
+            }
+        };
+        
+        const decodedToken = verifyAccessToken(accessToken, String(process.env.JWT_SECRET));
+        if (!decodedToken) {
+            return res.status(401).send({ isValid: false });
+        }
+        res.status(200).send({ isValid: true });
+
+    } catch (error) {
+        console.error('Erreur lors de la vérification du token:', error);
+        res.status(500).send({ isValid: false });
+    }
+};
 // export const payment = async (req: Request, res: Response) => {
 //     console.log("body",req.body);
 //     try {
@@ -198,10 +232,10 @@ export const logout = async (req: Request, res: Response) => {
 
 //         console.log("paymentIntent",charge);
         
-//         res.json({ client_secret: charge });
+//         res.send({ client_secret: charge });
 //       } catch (error:any) {
 //         console.error(error.message);
-//         res.status(500).json({ error: 'Internal Server Error' });
+//         res.status(500).send({ error: 'Internal Server Error' });
 //       }
 // }
 
@@ -216,10 +250,10 @@ export const logout = async (req: Request, res: Response) => {
 //         const prixActifs = prices.filter((price: any) => price.product.active === true);
 //         console.log("prixActifs",prixActifs.length);
         
-//         res.json({products: prixActifs});
+//         res.send({products: prixActifs});
 //     } catch (error:any) {
 //         console.error(error.message);
-//         res.status(500).json({ error: 'Internal Server Error' });
+//         res.status(500).send({ error: 'Internal Server Error' });
 //     }
 // }
 
@@ -229,10 +263,10 @@ export const logout = async (req: Request, res: Response) => {
 //         const product = await stripeInstance.prices.retrieve(id,{
 //             expand: ['product'],
 //         });
-//         res.json(product);
+//         res.send(product);
 //     } catch (error:any) {
 //         console.error(error.message);
-//         res.status(500).json({ error: 'Internal Server Error' });
+//         res.status(500).send({ error: 'Internal Server Error' });
 //     }
 // }
 
@@ -255,7 +289,7 @@ export const logout = async (req: Request, res: Response) => {
 //         res.status(200).send({clientSecret: paymentIntent.client_secret });
 //     } catch (error) {
 //         console.error(error);
-//         res.status(500).json({ error: 'Une erreur s\'est produite lors de la création de l\'intent de paiement' });
+//         res.status(500).send({ error: 'Une erreur s\'est produite lors de la création de l\'intent de paiement' });
 //     }
 
 // }

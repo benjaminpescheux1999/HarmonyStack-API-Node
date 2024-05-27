@@ -19,6 +19,12 @@ const userSchema = new Schema<IUser>({
     updatedAt: { type: Date, default: Date.now }
 });
 
+//mettre à jour la date de modification
+userSchema.pre('save', function (next) {
+    this.updatedAt = new Date();
+    next();
+});
+
 // Création du modèle User à partir du schéma
 const User = model<IUser>('User', userSchema);
      

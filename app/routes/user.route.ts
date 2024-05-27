@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-// import { createUser, create_payment_intent, getProducts, infoProduct, payment, pricing_table } from '../controllers/auth.controller';
 import {auth} from '../middlewares/auth.middleware';
+import { getUser, updateUser } from '../controllers/user.controller';
 
 const router = express.Router();
 
@@ -12,6 +12,10 @@ const router = express.Router();
 // router.get('/pricing_table', pricing_table)
 
 // router.post('/user', createUser);
+
+router.get('/user', [auth], getUser)
+
+router.put('/user', [auth], updateUser)
 
 router.get('/user', [auth], (req: Request, res: Response) => {        
     res.status(200).send({ user: req.user });

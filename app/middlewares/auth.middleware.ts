@@ -46,6 +46,7 @@ export const auth = async (req: { user?: any; cookies?: any; headers?: any; }, r
             return res.sendStatus(401);
             // return res.status(401).send({ message: 'Invalid token' });
         }
+
         /* On vérifie que le token CSRF correspond à celui présent dans le JWT  */  
         if (String(xsrfToken) !== String(decodedToken.xsrfToken)) {            
             return res.sendStatus(401);
@@ -56,22 +57,19 @@ export const auth = async (req: { user?: any; cookies?: any; headers?: any; }, r
         const userId = decodedToken.sub;
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(401).json({ message: `User ${userId} not exists` });
+            return res.status(401).send({ message: `User ${userId} not exists` });
         }
     
         /* On passe l'utilisateur dans notre requête afin que celui-ci soit disponible pour les prochains middlewares */
         req.user = user;
-
         /* Calcul du temps restant du token en minutes */
         // const expirationTime = decodedToken && decodedToken.exp && decodedToken.exp * 1000; // Convertir l'expiration en millisecondes
         // const currentTime = new Date().getTime(); // Temps actuel en millisecondes
         // const timeRemaining = expirationTime && Math.ceil((expirationTime - currentTime) / 60000); // Conversion en minutes et arrondissement
-
         return next();
     } catch (err) {
-        console.log('Error:', err);
-        
-        return res.status(500).json({ message: 'Internal error' });
+        console.log('Error:', err); 
+        return res.status(500).send({ message: 'Internal error' });
     }
 }
 
@@ -125,7 +123,7 @@ export const checkAuthentication = async (req: { user?: any; cookies?: any; head
 
             const newXsrfToken = await generateXsrfToken();
             const newRefreshToken = await generateBase64RefreshToken();
-            const newaccessToken = jwt.sign({ sub: String(validRefresh.userId), xsrfToken: newXsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
+            const newaccessToken = jwt.sign({ sub: String(validRefresh.userId), xsrfToken: newXsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '10m' });
 
             const query = { userId: validRefresh.userId };
             const update = { $set: { refreshToken: newRefreshToken, expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }};
@@ -139,7 +137,7 @@ export const checkAuthentication = async (req: { user?: any; cookies?: any; head
                     options: {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === 'production',
-                        maxAge: 1 * 60 * 60 * 1000,
+                        maxAge: 10 * 60 * 1000, // 10 minutes
                         sameSite: 'strict',
                         path: '/'
                     }
@@ -156,7 +154,7 @@ export const checkAuthentication = async (req: { user?: any; cookies?: any; head
                 }
             };
             req.additionalData = {
-                accessTokenExpiresIn: 24 * 60 * 60 * 1000,
+                accessTokenExpiresIn: 10 * 60 * 1000, // 10 minutes
                 refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000,
                 xsrfToken
             };
@@ -177,10 +175,9 @@ export const checkAuthentication = async (req: { user?: any; cookies?: any; head
         const userId = decodedToken.sub;
         const user = await User.findById(userId);
         req.user = user || null;
-
         return next();
     } catch (err) {
         console.log('Error:', err);
-        return res.status(500).json({ message: 'Internal error' });
+        return res.status(500).send({ message: 'Internal error' });
     }
 }
