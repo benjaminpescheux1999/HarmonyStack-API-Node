@@ -1,11 +1,14 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application} from 'express';
 import http from 'http';
 import userRouter from '../app/routes/user.route';
 import stadiumRouter from '../app/routes/stadium.route';
 import authRouter from '../app/routes/auth.route'
 import bodyParser from 'body-parser';
+import swaggerUi from 'swagger-ui-express'
+import specs from '../swagger.js'
+
 dotenv.config({ path: '.env' });
 
 import passport from 'passport'; 
@@ -42,6 +45,8 @@ app.use(helmet(
   }
 ));
 app.use(express.urlencoded({ extended: true }));
+
+
 // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const server = http.createServer(app);
@@ -82,6 +87,14 @@ connectWithRetry(maxRetries, retryDelay)
   .catch(error => {
     console.error('Could not start the server due to MongoDB connection issues:', error.message);
   });
+
+
+//Swagger
+app.use(  
+  '/api-docs', 
+  swaggerUi.serve, 
+  swaggerUi.setup(specs, { explorer: true })
+)
 
 // Initiation des routes
 app.use('/api/v1', userRouter);

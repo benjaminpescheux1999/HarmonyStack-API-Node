@@ -45,7 +45,10 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     }
 };
 
+
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+    console.log("req",req.body);
+    
     passport.authenticate('local', { session: false }, async (err: Error, user: { _id: string; }, info: { message: any; }) => {
         if (err) {
             return res.status(500).send({ error: 'Erreur lors de l\'authentification' });

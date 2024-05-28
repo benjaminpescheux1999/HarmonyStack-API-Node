@@ -23,9 +23,10 @@ Cette release introduit les fonctionnalités d'authentification sécurisée pour
 - [ ] Gestion de l'Utilisateur 🚧
   - Mise à jour des informations utilisateur sur la page de profil pour permettre une personnalisation et une gestion plus intuitive.
 
-### Fonctionnalités à Venir 🌟
 - [ ] Intégration Swagger
   - Ajout de Swagger pour la documentation des API afin de faciliter le développement et les tests.
+
+### Fonctionnalités à Venir 🌟
   
 - [ ] Intégration de l'Inscription
   - Implémentation de la fonctionnalité d'inscription pour permettre aux nouveaux utilisateurs de créer un compte.
@@ -216,10 +217,12 @@ This release introduces secure authentication features for the HarmonyStack proj
 - [ ] User Management 🚧
   - Updating user information on the profile page to enable more intuitive customization and management.
 
-### Upcoming Features 🌟
 - [ ] Swagger Integration
   - Adding Swagger for API documentation to facilitate development and testing.
   
+  
+### Upcoming Features 🌟
+
 - [ ] Signup Integration
   - Implementing the signup feature to allow new users to create an account.
   

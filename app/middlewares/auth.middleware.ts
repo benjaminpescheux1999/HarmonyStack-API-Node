@@ -14,7 +14,7 @@ export const auth = async (req: { user?: any; cookies?: any; headers?: any; }, r
         }
     
         const xsrfToken = headers['x-xsrf-token'];
-        
+
         /* On vérifie que le JWT est présent dans les cookies de la requête */
         if (!cookies || !cookies.access_token) {
             return res.sendStatus(401);

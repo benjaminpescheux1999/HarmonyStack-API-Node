@@ -65,8 +65,11 @@ export const updateUser = async (req: Request & { user?: any }, res: Response): 
 
   
       // Vérifier si le mot de passe est correct
-      if (password) {
-        if (!old_password) {
+      console.log('password:', password);
+      console.log('old_password:', old_password);
+      
+      if (password || password!=='' || (passport && password.length < 8) ) {
+        if (!old_password || old_password === '') {
           res.status(400).send({ error: 'L\'ancien mot de passe est requis', label: 'old_password'});
           return;
         }
@@ -97,7 +100,8 @@ export const updateUser = async (req: Request & { user?: any }, res: Response): 
       
       // Sauvegarder l'utilisateur
       await user.save();
-      res.status(200).send(user);
+
+      res.status(200).send({message:'Utilisateur mis à jour avec succès'});
     } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
       res.status(500).send({ error: 'Erreur lors de la mise à jour de l\'utilisateur' });
@@ -209,3 +213,4 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 //         .send(user);
 //     })(req, res, next);
 // }
+

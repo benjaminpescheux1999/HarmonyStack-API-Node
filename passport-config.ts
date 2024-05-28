@@ -10,6 +10,9 @@ passport.use(new LocalStrategy({
   usernameField: 'email', // Le champ utilisé comme nom d'utilisateur
 }, async (email: string, password: string, done) => {
   try {
+    console.log("email", email);
+    console.log("password", password);
+    
       // Recherche de l'utilisateur dans la base de données
       const user = await User.findOne({ email });
 
