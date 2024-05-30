@@ -9,7 +9,7 @@
 
 Une pile technologique harmonieuse, offrant une compatibilité totale entre les différentes couches.
 
-## Release v1.0.2
+## Release v1.0.3
 
 ### Description
 Cette release introduit les fonctionnalités d'authentification sécurisée pour le projet HarmonyStack, ainsi que les explications sur son fonctionnement.
@@ -22,13 +22,13 @@ Cette release introduit les fonctionnalités d'authentification sécurisée pour
   - Optimisation des mécanismes d'authentification pour renforcer la sécurité et améliorer l'expérience utilisateur.
 
 - [ ] ~~*Gestion de l'Utilisateur*~~
-  - Mise à jour des informations utilisateur sur la page de profil pour permettre une personnalisation et une gestion plus intuitive.
+  - ~~*Mise à jour des informations utilisateur sur la page de profil pour permettre une personnalisation et une gestion plus intuitive.*~~
 
 - [ ] ~~*Intégration Swagger*~~
-  - Ajout de Swagger pour la documentation des API afin de faciliter le développement et les tests.
+  - ~~*Ajout de Swagger pour la documentation des API afin de faciliter le développement et les tests.*~~
 
 - [ ] ~~*Intégration Traduction Api*~~
-  - Ajout d'un stratégie de traduction pour les différentes langues piloter depuis un front.
+  - ~~*Ajout d'un stratégie de traduction pour les différentes langues piloter depuis un front.*~~
 
 ### Fonctionnalités à Venir 🌟
   
@@ -208,7 +208,7 @@ Assurez-vous également de configurer correctement votre base de données selon 
 ### English
 A harmonious technology stack, offering full compatibility between different layers.
 
-## Release v1.0.2
+## Release v1.0.3
 
 ### Description
 This release introduces secure authentication features for the HarmonyStack project, along with explanations of its operation.
@@ -220,13 +220,13 @@ This release introduces secure authentication features for the HarmonyStack proj
   - Optimization of authentication mechanisms to enhance security and improve user experience.
 
 - [ ] ~~*User Management*~~
-  - Updating user information on the profile page to enable more intuitive customization and management.
+  - ~~*Updating user information on the profile page to enable more intuitive customization and management.*~~
 
 - [ ] ~~*Swagger Integration*~~
-  - Adding Swagger for API documentation to facilitate development and testing.
+  - ~~*Adding Swagger for API documentation to facilitate development and testing.*~~
 
 - [ ] ~~*Translation API Integration*~~
-  - Adding a translation API strategy to enable language translation from a front.
+  - ~~*Adding a translation API strategy to enable language translation from a front.*~~
   
   
 ### Upcoming Features 🌟
