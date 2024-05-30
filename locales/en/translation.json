@@ -1,0 +1,33 @@
+{
+    "user_not_found": "User not found",
+    "error_retrieving_user": "Error retrieving user",
+    "at_least_one_field_required": "At least one field is required",
+    "email_already_used": "This email is already used",
+    "old_password_required": "Old password is required",
+    "incorrect_old_password": "Incorrect old password",
+    "new_password_must_be_different": "New password must be different from the old one",
+    "user_updated_successfully": "User updated successfully",
+    "error_updating_user": "Error updating user",
+    "all_fields_required": "All fields are required",
+    "passwords_do_not_match": "Passwords do not match",
+    "incorrect_password": "Incorrect password",
+    "error_creating_user": "Error creating user",
+    "authentication_error": "Authentication error",
+    "authentication_failed": "Authentication failed",
+    "refresh_token_required": "A refresh token is required",
+    "invalid_refresh_token": "Invalid refresh token",
+    "invalid_or_expired_refresh_token": "Invalid or expired refresh token",
+    "internal_server_error_on_token_refresh": "Internal server error on token refresh",
+    "logout_successful": "Logout successful",
+    "logout_error": "Error during logout",
+    "form_incomplete": "Form is incomplete",
+    "internal_server_error": "Internal server error",
+    "middleware_auth": {
+        "missing_xsrf_token": "Missing XSRF token in headers",
+        "missing_token_in_cookie": "Missing token in cookie",
+        "invalid_token": "Invalid token",
+        "bad_xsrf_token": "Bad XSRF token",
+        "user_not_exists": "User does not exist",
+        "login_failed": "Login failed"
+    }
+}

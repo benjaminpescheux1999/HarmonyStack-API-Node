@@ -6,125 +6,124 @@ import passport from 'passport';
 import { hashPassword,  } from '../services/hash.service';
 import bcrypt from 'bcrypt';
 
-dotenv.config(); // Charger les variables d'environnement
+dotenv.config();
 
-// Afficher les informations de l'utilisateur pour afficher sa page profil
-export const getUser = async (req: Request & {user?:any}, res: Response): Promise<void> => {
+// Display user information to show their profile page
+export const getUser = async (req: Request & {user?:any, t?:any}, res: Response): Promise<void> => {
+    const t = req.t;
     try {
-        //verifier si le user.id existe
+        //check if user.id exists
         if (!req.user || !req.user._id) {
-            res.status(404).send({ error: 'Utilisateur non trouvé' });
+            res.status(404).send({ error: t('user_not_found') });
             return;
         }
-        //recuperer l'utilisateur sauf son password et son _id
+        //retrieve the user except their password and _id
         const user = await User.findById(req.user._id).select('-password -_id');
         if (!user) {
-            res.status(404).send({ error: 'Utilisateur non trouvé' });
+            res.status(404).send({ error: t('user_not_found') });
             return;
         }
         res.status(200).send(user);
     } catch (error) {
-        console.error('Erreur lors de la récupération de l\'utilisateur :', error);
-        res.status(500).send({ error: 'Erreur lors de la récupération de l\'utilisateur' });
+        console.error(t('error_retrieving_user'), error);
+        res.status(500).send({ error: t('error_retrieving_user') });
     }
 }
 
-export const updateUser = async (req: Request & { user?: any }, res: Response): Promise<void> => {
+export const updateUser = async (req: Request & { user?: any, t?:any }, res: Response): Promise<void> => {
+  const t = req.t;
     try {
-      // Vérifier si le user.id existe
+      // Check if user.id exists
       if (!req.user || !req.user._id) {
-        res.status(404).send({ error: 'Utilisateur non trouvé', label: 'user'});
+        res.status(404).send({ error: t('user_not_found'), label: 'user'});
         return;
       }
   
-      // Récupérer l'utilisateur
+      // Retrieve the user
       const user = await User.findById(req.user._id);
       if (!user) {
-        res.status(404).send({ error: 'Utilisateur non trouvé', label: 'user'});
+        res.status(404).send({ error: t('user_not_found'), label: 'user'});
         return;
       }
   
-      // Récupérer les champs à modifier
+      // Retrieve fields to modify
       const { username, lastname, email, password, old_password } = req.body;      
   
-      // Vérifier si les champs sont vides
+      // Check if fields are empty
       if (!username && !lastname && !email && !password) {
-        res.status(400).send({ error: 'Au moins un champ est requis', label: 'user'});
+        res.status(400).send({ error: t('at_least_one_field_required'), label: 'user'});
         return;
       }
   
-      // Vérifier si l'email est unique
+      // Check if email is unique
       if (email) {
         const existingUser = await User.findOne({ email }, '_id');
-        // Si l'email existe et n'est pas le sien
+        // If email exists and is not theirs
         if (existingUser && String(existingUser._id) !== String(req.user._id)) {
-          res.status(400).send({ error: 'Cet email est déjà utilisé', label: 'email'});
+          res.status(400).send({ error: t('email_already_used'), label: 'email'});
           return;
         }
       }
 
-  
-      // Vérifier si le mot de passe est correct
-      console.log('password:', password);
-      console.log('old_password:', old_password);
+      // Check if the password is correct
       
       if (password || password!=='' || (passport && password.length < 8) ) {
         if (!old_password || old_password === '') {
-          res.status(400).send({ error: 'L\'ancien mot de passe est requis', label: 'old_password'});
+          res.status(400).send({ error: t('old_password_required'), label: 'old_password'});
           return;
         }
   
-        // Utiliser bcrypt pour comparer le password avec old_password
+        // Use bcrypt to compare password with old_password
         const isOldPasswordValid = await bcrypt.compare(old_password, user.password);
         if (!isOldPasswordValid) {            
-            res.status(400).send({ error: 'L\'ancien mot de passe est incorrect', label: 'old_password'});
+            res.status(400).send({ error: t('incorrect_old_password'), label: 'old_password'});
             return;
         }
   
-        // Vérifier si le nouveau mot de passe est le même que l'ancien
+        // Check if the new password is the same as the old one
         const isSamePassword = await bcrypt.compare(password, user.password);
         
         if (isSamePassword) {
-          res.status(400).send({ error: 'Le nouveau mot de passe doit être différent de l\'ancien', label: 'password'});
+          res.status(400).send({ error: t('new_password_must_be_different'), label: 'password'});
           return;
         }
   
-        // Vérifier si le mot de passe est valide
+        // Check if the password is valid
         user.password = await hashPassword(password);
       }
   
-      // Modifier les champs
+      // Modify fields
       if (username) user.username = username;
       if (lastname) user.lastname = lastname;
       if (email) user.email = email;
       
-      // Sauvegarder l'utilisateur
+      // Save the user
       await user.save();
-
-      res.status(200).send({message:'Utilisateur mis à jour avec succès'});
+      res.status(200).send({message: t('user_updated_successfully')});
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'utilisateur :', error);
-      res.status(500).send({ error: 'Erreur lors de la mise à jour de l\'utilisateur' });
+      console.error(t('error_updating_user'), error);
+      res.status(500).send({ error: t('error_updating_user') });
     }
 }
 
-export const signup = async (req: Request, res: Response): Promise<void> => {
+export const signup = async (req: Request & { t?:any }, res: Response): Promise<void> => {
+    const t = req.t;
     const { username, lastname, email, password, passwordConfirmation } = req.body;
 
     if (!username || !lastname || !email || !password || !passwordConfirmation) {
-        res.status(400).send({ message: 'Tous les champs sont requis' });
+        res.status(400).send({ message: t('all_fields_required') });
         return;
     }
 
     if (password !== passwordConfirmation) {
-        res.status(400).send({ message: 'Les mots de passe ne correspondent pas' });
+        res.status(400).send({ message: t('passwords_do_not_match') });
         return;
     }
 
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            res.status(400).send({ message: 'Cet email est déjà utilisé' });
+            res.status(400).send({ message: t('email_already_used') });
             return;
         }
 
@@ -140,77 +139,8 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
         const savedUser = await newUser.save();
         res.status(201).send(savedUser);
     } catch (error) {
-        console.error('Erreur lors de la création de l\'utilisateur :', error);
-        res.status(500).send({ message: 'Erreur lors de la création de l\'utilisateur' });
+        console.error(t('error_creating_user'), error);
+        res.status(500).send({ message: t('error_creating_user') });
     }
 };
-
-// export const createUser = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//         const { username, lastname, email, password } = req.body;
-        
-//         if (!username || !lastname || !email || !password) {
-//             res.status(400).send({ error: 'Tous les champs sont requis' });
-//             return;
-//         }
-
-//         const existingUser = await User.findOne({ email });
-//         if (existingUser) {
-//             res.status(400).send({ error: 'Cet email est déjà utilisé' });
-//             return;
-//         }
-
-//         const hashedPassword = await hashPassword(password);
-        
-//         const newUser = new User({
-//             username,
-//             lastname,
-//             email,
-//             password: hashedPassword,
-//         });
-
-//         const savedUser = await newUser.save();
-        
-//         res.status(201).send(savedUser);
-//     } catch (error) {
-//         console.error('Erreur lors de la création de l\'utilisateur :', error);
-//         res.status(500).send({ error: 'Erreur lors de la création de l\'utilisateur' });
-//     }
-// };
-
-// export const loginUser = (req: Request, res: Response, next: NextFunction) => {
-//     passport.authenticate('local', { session: false }, (err: Error, user: { _id: string; }, info: { message: any; }) => {
-//         if (err) {
-//             return res.status(500).send({ error: 'Erreur lors de l\'authentification' });
-//         }
-//         if (!user) {
-//             return res.status(400).send({ error: info && info.message ? info.message : 'Échec de l\'authentification' });
-//         }
-//         const token = jwt.sign({ sub: user._id }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
-//         const refreshToken = jwt.sign({ sub: user._id }, String(process.env.REFRESH_TOKEN_SECRET), { expiresIn: '1d' });
-        
-//         res
-//         .cookie('refreshToken', refreshToken, { 
-//             httpOnly: true,
-//             secure: process.env.NODE_ENV === 'production',
-//             sameSite: 'strict',
-//         })
-//         .header('Authorization', token).send({ user, token });
-//     })(req, res, next);
-// };
-
-// export const refreshToken = (req: Request, res: Response, next: NextFunction) => {
-//     passport.authenticate('refresh-token', { session: false }, (err: Error, user: { _id: string; }, info: { message: any; }) => {
-//         if (err) {
-//             return res.status(500).send({ error: 'Erreur lors de l\'authentification' });
-//         }
-//         if (!user) {
-//             return res.status(400).send({ error: info && info.message ? info.message : 'Échec de l\'authentification' });
-//         }
-//         const accessToken = jwt.sign({ user: user._id }, String(process.env.NODE_ENV), { expiresIn: '1h' });
-//         res
-//         .header('Authorization', accessToken)
-//         .send(user);
-//     })(req, res, next);
-// }
 

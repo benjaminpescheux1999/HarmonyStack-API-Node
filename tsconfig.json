@@ -14,10 +14,11 @@
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
       "outDir": "dist",
-      "strictPropertyInitialization": false
+      "strictPropertyInitialization": false,
+      "jsx": "react"
     },
     "include": [
-      "app/**/*.ts",
+      "app/**/*.ts", "app/services/plugin.tsx",
     //   "app/config/gc-keys.json"
     ],
     "exclude": [

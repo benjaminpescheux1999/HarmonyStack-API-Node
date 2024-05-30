@@ -9,12 +9,12 @@ export const hashPassword = async (password: string): Promise<string> => {
     return hashedPassword;
 };
 
-//Générer xsrf token xsrfToken
+// Generate xsrf token
 export const generateXsrfToken = async (): Promise<string> => {
     return crypto.randomBytes(64).toString('hex');
 };
 
-//Générer refresh token en base64
+// Generate refresh token in base64
 export const generateBase64RefreshToken = async (): Promise<string> => {
     return crypto.randomBytes(128).toString('base64');
 };

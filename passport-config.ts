@@ -3,34 +3,33 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { User } from './app/models/index.model';
 import bcrypt from 'bcrypt';
-import { Document, Types } from 'mongoose';
 
-// Configuration de la stratégie locale (nom d'utilisateur et mot de passe)
+// Configuration of the local strategy (username and password)
 passport.use(new LocalStrategy({
-  usernameField: 'email', // Le champ utilisé comme nom d'utilisateur
-}, async (email: string, password: string, done) => {
+  usernameField: 'email', // The field used as username
+  passwordField: 'password', // The field used as password
+  passReqToCallback: true // Passes req to the callback
+}, async (req: any, email: string, password: string, done) => {
+  const t = req.t;
   try {
-    console.log("email", email);
-    console.log("password", password);
-    
-      // Recherche de l'utilisateur dans la base de données
+      // Searching for the user in the database
       const user = await User.findOne({ email });
 
-      // Si l'utilisateur n'est pas trouvé
+      // If the user is not found
       if (!user) {
-          return done(null, false, { message: 'Aucun utilisateur trouvé avec cet email' });
+          return done(null, false, { message: t('middleware_auth.Login failed') });
       }
 
-      // Vérification du mot de passe
+      // Password verification
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-          return done(null, false, { message: 'Mot de passe incorrect' });
+          return done(null, false, { message: t('incorrect_password') });
       }
 
-      // Si l'utilisateur est trouvé et le mot de passe correspond
+      // If the user is found and the password matches
       return done(null, user);
   } catch (error) {
-      console.log("error", error);
+      console.log(t('internal_server_error'), error);
       return done(error);
   }
 }));
@@ -39,16 +38,16 @@ const cookie_Access_token_Extractor = (req: any) => {
   let token = null;  
   if (req && req.cookies) {    
     token = req.cookies['access_token'];
-  }
-  console.log("token", token);
-  
+  }  
   return token;
 };
 
-// Configuration de la stratégie JWT
+// Configuration of the JWT strategy
 passport.use('jwt', new JwtStrategy({
-  jwtFromRequest: ExtractJwt.fromExtractors([cookie_Access_token_Extractor]),
-  secretOrKey: String(process.env.JWT_SECRET)
+  jwtFromRequest: ExtractJwt.fromExtractors([cookie_Access_token_Extractor]), // Using the custom function to extract the token from the cookie
+  secretOrKey: String(process.env.JWT_SECRET), // Secret key to verify the access token
+  passReqToCallback: true // Passes req to the callback
+
 }, async (payload, done) => {
   try {
     const user = await User.findById(payload.sub)
@@ -63,7 +62,7 @@ passport.use('jwt', new JwtStrategy({
 }));
 
 
-// Fonction personnalisée pour extraire le token du cookie
+// Custom function to extract the token from the cookie
 const cookie_Refresh_token_Extractor = (req: any) => {
   let token = null;  
   if (req && req.cookies) {    
@@ -72,18 +71,19 @@ const cookie_Refresh_token_Extractor = (req: any) => {
   return token;
 };
 
-// Configuration de la stratégie de rafraîchissement de token
+// Configuration of the refresh token strategy
 passport.use('refresh-token', new JwtStrategy({
-  jwtFromRequest: ExtractJwt.fromExtractors([cookie_Refresh_token_Extractor]), // Utilisation de la fonction personnalisée pour extraire le token du cookie
-  secretOrKey: String(process.env.REFRESH_TOKEN_SECRET), // Clé secrète pour vérifier le token de rafraîchissement
-}, async (payload, done) => {
+  jwtFromRequest: ExtractJwt.fromExtractors([cookie_Refresh_token_Extractor]), // Using the custom function to extract the token from the cookie
+  secretOrKey: String(process.env.REFRESH_TOKEN_SECRET), // Secret key to verify the refresh token
+  passReqToCallback: true // Passes req to the callback
+}, async (req: any, payload, done) => {
+  const t = req.t;
   try {
-    console.log("payload", payload);
 
-    // Récupérer l'utilisateur à partir du payload du token
+    // Retrieve the user from the token payload
     const user = await User.findById(payload.sub);
 
-    // Si l'utilisateur est trouvé
+    // If the user is found
     if (user) {
       return done(null, user);
     } else {

@@ -6,8 +6,14 @@ import userRouter from '../app/routes/user.route';
 import stadiumRouter from '../app/routes/stadium.route';
 import authRouter from '../app/routes/auth.route'
 import bodyParser from 'body-parser';
+
+//Swagger - documentation
 import swaggerUi from 'swagger-ui-express'
-import specs from '../swagger.js'
+import specs from '../swagger'
+
+// i18n - translation
+import i18next from '../i18n';
+import i18nextMiddleware from 'i18next-http-middleware';
 
 dotenv.config({ path: '.env' });
 
@@ -26,7 +32,11 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,
 }));
-//Sécurisation des en-têtes HTTP et faille XSS
+
+// Serve static files from the 'public' directory
+app.use(express.static('public'));
+
+// Securing HTTP headers and XSS vulnerability
 app.use(helmet(
   {
     contentSecurityPolicy: false,
@@ -47,19 +57,17 @@ app.use(helmet(
 app.use(express.urlencoded({ extended: true }));
 
 
-// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
 const server = http.createServer(app);
 
-// Fonction pour attendre un certain délai
+// Function to wait for a certain delay
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Fonction de connexion avec réessai
+// Connection function with retry
 const connectWithRetry = async (retries: number, delay: number) => {
   for (let i = 0; i < retries; i++) {
     try {
       await mongoose.connect(process.env.MONGODB_URI || '', {
-        serverSelectionTimeoutMS: 5000 // nombre de millisecondes avant de générer une erreur de sélection de serveur
+        serverSelectionTimeoutMS: 5000
       });
       console.log('Connected to MongoDB');
       return;
@@ -88,15 +96,22 @@ connectWithRetry(maxRetries, retryDelay)
     console.error('Could not start the server due to MongoDB connection issues:', error.message);
   });
 
+const options = {
+  customSiteTitle: "HarmonyStack API Node",
+  customJs: "/inject_lang",
+};
 
-//Swagger
-app.use(  
-  '/api-docs', 
-  swaggerUi.serve, 
-  swaggerUi.setup(specs, { explorer: true })
-)
+app.use("/inject_lang", (req: express.Request, res: express.Response) => {
+  res.sendFile("/services/injectionCustomSelectScript.js", {root: __dirname})
+});
 
-// Initiation des routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, options));
+
+//i18n - translation
+app.use(i18nextMiddleware.handle(i18next));
+
+
+// Initiation routes
 app.use('/api/v1', userRouter);
 app.use('/api/v1', stadiumRouter);
 app.use('/api/v1', authRouter);

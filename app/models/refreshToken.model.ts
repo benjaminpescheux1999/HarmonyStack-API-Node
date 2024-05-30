@@ -1,6 +1,6 @@
 import { Schema, model, Document } from 'mongoose';
 
-// Définition du schéma de l'utilisateur
+// Definition of the Refresh Token schema
 export interface IRefreshToken extends Document {
     refreshToken?: string;
     userId?: Schema.Types.ObjectId;
@@ -17,7 +17,7 @@ const refreshTokenSchema = new Schema<IRefreshToken>({
     updatedAt: { type: Date, default: Date.now }
 });
 
-// Création du modèle User à partir du schéma
+// Creation of the RefreshToken model from the schema
 const RefreshToken = model<IRefreshToken>('RefreshToken', refreshTokenSchema);
      
 

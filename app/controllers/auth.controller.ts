@@ -4,62 +4,21 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import passport from 'passport';
 import { generateBase64RefreshToken, generateXsrfToken, hashPassword } from '../services/hash.service';
-// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-dotenv.config(); // Charger les variables d'environnement
 
-// import stripe from 'stripe';
-// console.log("key ==>",String(process.env.STRIPE_SECRET_KEY));
+dotenv.config();
 
-// const stripeInstance = new stripe(String(process.env.STRIPE_SECRET_KEY));
-
-export const createUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { username, lastname, email, password } = req.body;
-        
-        if (!username || !lastname || !email || !password) {
-            res.status(400).send({ error: 'Tous les champs sont requis' });
-            return;
-        }
-
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            res.status(400).send({ error: 'Cet email est déjà utilisé' });
-            return;
-        }
-
-        const hashedPassword = hashPassword(password);
-        
-        const newUser = new User({
-            username,
-            lastname,
-            email,
-            password: hashedPassword,
-        });
-
-        const savedUser = await newUser.save();
-        
-        res.status(201).send(savedUser);
-    } catch (error) {
-        console.error('Erreur lors de la création de l\'utilisateur :', error);
-        res.status(500).send({ error: 'Erreur lors de la création de l\'utilisateur' });
-    }
-};
-
-
-export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
-    console.log("req",req.body);
-    
+export const loginUser = async (req: Request & { t?:any }, res: Response, next: NextFunction) => {
+    const t = req.t;
     passport.authenticate('local', { session: false }, async (err: Error, user: { _id: string; }, info: { message: any; }) => {
         if (err) {
-            return res.status(500).send({ error: 'Erreur lors de l\'authentification' });
+            return res.status(500).send({ error: t('authentication_error') });
         }
         if (!user) {
-            return res.status(400).send({ error: info && info.message ? info.message : 'Échec de l\'authentification' });
+            return res.status(400).send({ error: info && info.message ? info.message : t('authentication_failed') });
         }
-
-        /* On créer le token CSRF */
+        /* Create the CSRF token */
         const xsrfToken = await generateXsrfToken();
-         /* On créer le JWT avec le token CSRF dans le payload */
+         /* Create the JWT with the CSRF token in the payload */
         const accessToken = jwt.sign({ sub: user._id, xsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
 
         const refreshToken = await generateBase64RefreshToken();
@@ -72,47 +31,48 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
         const includeUserFields = ['_id', 'username', 'lastname', 'email'];
         const userInfos = await User.findById(user._id, includeUserFields);
-        /* On créer le cookie contenant le JWT */
+        /* Create the cookie containing the JWT */
         res.cookie('access_token', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 1 * 60 * 60 * 1000, //1 heure
+            maxAge: 1 * 60 * 60 * 1000, //1 hour
             sameSite: 'strict',
             path: '/',
         }).cookie('refresh_token', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 365 * 24 * 60 * 60 * 1000, //1 an
+            maxAge: 365 * 24 * 60 * 60 * 1000, //1 year
             path: '/',
             sameSite: 'strict'
         })
         .send({
-            accessTokenExpiresIn: 24 * 60 * 60 * 1000,
-            refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000,
+            accessTokenExpiresIn: 24 * 60 * 60 * 1000, //1 day
+            refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000, //1 year
             xsrfToken,
             user:userInfos
           })
     })(req, res, next);
 };
 
-export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+export const refreshToken = async (req: Request & { t?:any }, res: Response) => {
+    const t = req.t;
     try {
         const { cookies } = req;
         if (!cookies || !cookies.refresh_token) {
-            return res.status(401).send({ message: 'Un token de rafraîchissement est requis' });
+            return res.status(401).send({ message: t('refresh_token_required') });
         }
         const refreshToken = cookies.refresh_token;
         console.log("refreshToken",refreshToken);
         const validrefresh = await RefreshToken.findOne({ refreshToken });
         if (!validrefresh) {
-            return res.status(401).send({ message: 'Token de rafraîchissement invalide' });
+            return res.status(401).send({ message: t('invalid_refresh_token') });
         }    
         
         if (!validrefresh.userId || !validrefresh.expiresAt || (validrefresh.expiresAt && validrefresh.expiresAt < new Date())) {
-            return res.status(401).send({ message: 'Token de rafraîchissement invalide ou expiré' });
+            return res.status(401).send({ message: t('invalid_or_expired_refresh_token') });
         }
         
-        /* On créer le token CSRF */
+        /* Create the CSRF token */
         const xsrfToken = await generateXsrfToken();
         const NewRefreshToken = await generateBase64RefreshToken();
         const accessToken = jwt.sign({ sub: String(validrefresh.userId), xsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
@@ -122,49 +82,48 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
         const options = { upsert: true };
         await RefreshToken.updateOne(query, update, options);
 
-        /* On créer le cookie contenant le JWT */
+        /* Create the cookie containing the JWT */
         res.cookie('access_token', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 1 * 60 * 60 * 1000, //1 heure
+            maxAge: 1 * 60 * 60 * 1000, //1 hour
             sameSite: 'strict',
             path: '/',
         }).cookie('refresh_token', NewRefreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 365 * 24 * 60 * 60 * 1000, //1 an
+            maxAge: 365 * 24 * 60 * 60 * 1000, //1 year
             path: '/',
             sameSite: 'strict'
         }).send({
-            accessTokenExpiresIn: 24 * 60 * 60 * 1000,
-            refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000,
+            accessTokenExpiresIn: 24 * 60 * 60 * 1000, //1 day
+            refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000, //1 year
             xsrfToken
         });
     } catch (error) {
-        console.log('Erreur lors du rafraîchissement du token:', error);
-        return res.status(500).send({ message: 'Erreur interne du serveur lors du rafraîchissement du token' });
+        console.log(t('internal_server_error_on_token_refresh'), error);
+        return res.status(500).send({ message: t('internal_server_error_on_token_refresh') });
     }
 }
 
-export const signup = async (req: Request, res: Response) => {
+export const signup = async (req: Request & {t?:any}, res: Response) => {
+    const t = req.t;
     const { email, password, firstname, lastname, passwordConfirmation } = req.body;
-    console.log("req.body",req.body);
     
     if (!email || !password || !firstname || !lastname || !passwordConfirmation) {
-        return res.status(400).send({ message: 'Tous les champs sont requis' });
+        return res.status(400).send({ message: t('all_fields_required') });
     }
     if (password !== passwordConfirmation) {
-        return res.status(400).send({ message: 'Les mots de passe ne correspondent pas' });
+        return res.status(400).send({ message: t('passwords_do_not_match') });
     }
 
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).send({ message: 'Cet email est déjà utilisé' });
+            return res.status(400).send({ message: t('email_already_used') });
         }
 
         const hashedPassword = await hashPassword(password);
-        console.log("hashedPassword",hashedPassword);
         
         const newUser = new User({
             email,
@@ -176,153 +135,20 @@ export const signup = async (req: Request, res: Response) => {
         return res.status(201).send(savedUser);
     } catch (error) {
         console.error(error);
-        return res.status(500).send({ message: 'Erreur lors de la création de l\'utilisateur' });
+        return res.status(500).send({ message: t('error_creating_user') });
     }
 }
 
-export const logout = async (req: Request, res: Response) => {
+export const logout = async (req: Request & {t?:any}, res: Response) => {
+    const t = req.t;
     try {
         const { cookies } = req;
         if (cookies && cookies.refresh_token) {
             await RefreshToken.deleteOne({ refreshToken: cookies.refresh_token });
         }
-        res.clearCookie('access_token').clearCookie('refresh_token').send({ message: 'Déconnexion réussie' });
+        res.clearCookie('access_token').clearCookie('refresh_token').send({ message: t('logout_successful') });
     } catch (error) {
-        
+        console.error(t('logout_error'), error);
+        return res.status(500).send({ message: t('logout_error') });
     }
 }
-
-export const verifyToken = async (req: Request, res: Response) => {
-    try {
-        const accessToken = req.cookies['access_token'];
-        if (!accessToken) {
-            return res.status(401).send({ isValid: false });
-        }
-
-        // Fonction de vérification de l'access token
-        const verifyAccessToken = (accessToken: string, jwtSecret: string): jwt.JwtPayload | null => {
-            try {
-                const decodedToken = jwt.verify(accessToken, jwtSecret) as jwt.JwtPayload;
-                // console.log('Decoded token:', decodedToken);
-                
-                return decodedToken;
-            } catch (error) {
-                return null;
-            }
-        };
-        
-        const decodedToken = verifyAccessToken(accessToken, String(process.env.JWT_SECRET));
-        if (!decodedToken) {
-            return res.status(401).send({ isValid: false });
-        }
-        res.status(200).send({ isValid: true });
-
-    } catch (error) {
-        console.error('Erreur lors de la vérification du token:', error);
-        res.status(500).send({ isValid: false });
-    }
-};
-// export const payment = async (req: Request, res: Response) => {
-//     console.log("body",req.body);
-//     try {
-//         const { amount, token } = req.body;
-//         const charge = await stripeInstance.charges.create({
-//             amount,
-//             currency: 'usd',
-//             description: 'Example charge',
-//             source: token.id,
-//           });
-
-//         console.log("paymentIntent",charge);
-        
-//         res.send({ client_secret: charge });
-//       } catch (error:any) {
-//         console.error(error.message);
-//         res.status(500).send({ error: 'Internal Server Error' });
-//       }
-// }
-
-// export const getProducts = async (req: Request, res: Response) => {
-//     try {
-//         let products = await stripeInstance.prices.list({
-//             active: true,
-//             expand: ['data.product'],
-//         });
-//         const prices = products.data; // Obtenir le tableau de prix à partir de la réponse
-
-//         const prixActifs = prices.filter((price: any) => price.product.active === true);
-//         console.log("prixActifs",prixActifs.length);
-        
-//         res.send({products: prixActifs});
-//     } catch (error:any) {
-//         console.error(error.message);
-//         res.status(500).send({ error: 'Internal Server Error' });
-//     }
-// }
-
-// export const infoProduct = async (req: Request, res: Response) => {
-//     try {        
-//         const { id } = req.params;
-//         const product = await stripeInstance.prices.retrieve(id,{
-//             expand: ['product'],
-//         });
-//         res.send(product);
-//     } catch (error:any) {
-//         console.error(error.message);
-//         res.status(500).send({ error: 'Internal Server Error' });
-//     }
-// }
-
-// export const create_payment_intent = async (req: Request, res: Response) => {
-//     const { custumerId, amount, currency, price } = req.body; // Récupérer les items envoyés depuis le frontend
-//     console.log("priceId",price);
-    
-//     try {
-//         const paymentIntent = await stripeInstance.paymentIntents.create({
-            
-//             amount: amount,
-//             currency: currency,
-//             payment_method_types: ['card'],
-//             metadata: {
-//                 offerId: custumerId,
-//             },
-//         });
-        
-//         // Envoyer le clientSecret en réponse
-//         res.status(200).send({clientSecret: paymentIntent.client_secret });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).send({ error: 'Une erreur s\'est produite lors de la création de l\'intent de paiement' });
-//     }
-
-// }
-
-// export const pricing_table = async (req: Request, res: Response) => {
-//     try {
-//         return res.status(200).send({PRICING_TABLE_ID:process.env.pricing_table_id});
-//     } catch (error) {
-        
-//     }
-// }
-
-// export const suscribeplan = async (req: Request, res: Response) => {
-//     const { custumerId, amount, currency, price } = req.body; // Récupérer les items envoyés depuis le frontend
-
-//     try {
-//         const subscription = await stripeInstance.subscriptions.create({
-//             customer: custumerId,
-//             items: [
-//               {
-//                 price: price,
-//               },
-//             ],
-//           });
-//     } catch (error) {
-        
-//     }
-// }
-
-// function calculateOrderAmount() {
-//     // Calculer le montant total de la commande en fonction des articles
-//     return 1000; // Par exemple, 10€ en centimes
-// }

@@ -1,0 +1,33 @@
+{
+    "user_not_found": "Utilisateur non trouvé",
+    "error_retrieving_user": "Erreur lors de la récupération de l'utilisateur",
+    "at_least_one_field_required": "Au moins un champ est requis",
+    "email_already_used": "Cet email est déjà utilisé",
+    "old_password_required": "L'ancien mot de passe est requis",
+    "incorrect_old_password": "L'ancien mot de passe est incorrect",
+    "new_password_must_be_different": "Le nouveau mot de passe doit être différent de l'ancien",
+    "user_updated_successfully": "Utilisateur mis à jour avec succès",
+    "error_updating_user": "Erreur lors de la mise à jour de l'utilisateur",
+    "all_fields_required": "Tous les champs sont requis",
+    "passwords_do_not_match": "Les mots de passe ne correspondent pas",
+    "incorrect_password": "Mot de passe incorrect",
+    "error_creating_user": "Erreur lors de la création de l'utilisateur",
+    "authentication_error": "Erreur lors de l'authentification",
+    "authentication_failed": "Échec de l'authentification",
+    "refresh_token_required": "Un token de rafraîchissement est requis",
+    "invalid_refresh_token": "Token de rafraîchissement invalide",
+    "invalid_or_expired_refresh_token": "Token de rafraîchissement invalide ou expiré",
+    "internal_server_error_on_token_refresh": "Erreur interne du serveur lors du rafraîchissement du token",
+    "logout_successful": "Déconnexion réussie",
+    "logout_error": "Erreur lors de la déconnexion",
+    "form_incomplete": "Le formulaire est incomplet",
+    "internal_server_error": "Erreur interne du serveur",
+    "middleware_auth": {
+        "missing_xsrf_token": "Token XSRF manquant dans les en-têtes",
+        "missing_token_in_cookie": "Token manquant dans le cookie",
+        "invalid_token": "Token invalide",
+        "bad_xsrf_token": "Mauvais token XSRF",
+        "user_not_exists": "L'utilisateur n'existe pas",
+        "login_failed": "Connexion échouée"
+    }
+}

@@ -4,17 +4,6 @@ import { getUser, updateUser } from '../controllers/user.controller';
 
 const router = express.Router();
 
-// router.post('/payment', payment);
-// router.get('/products', getProducts);
-// router.get('/plan/:id', infoProduct);
-// router.post('/create-payment-intent', create_payment_intent);
-  
-// router.get('/pricing_table', pricing_table)
-
-// router.post('/user', createUser);
-
-
-
 /**
  * @swagger
  * /user:
@@ -59,7 +48,6 @@ const router = express.Router();
  *       description: Erreur interne du serveur
  */
 router.get('/user', [auth], getUser)
-
 
 /**
  * @swagger
@@ -130,13 +118,7 @@ router.get('/user', [auth], getUser)
  *     500:
  *       description: Erreur interne du serveur
  */
-
 router.put('/user', [auth], updateUser)
-
-router.get('/user', [auth], (req: Request, res: Response) => {        
-    res.status(200).send({ user: req.user });
-});
-
 
 
 export default router;

@@ -9,7 +9,7 @@
 
 Une pile technologique harmonieuse, offrant une compatibilité totale entre les différentes couches.
 
-## Release v1.0.1
+## Release v1.0.2
 
 ### Description
 Cette release introduit les fonctionnalités d'authentification sécurisée pour le projet HarmonyStack, ainsi que les explications sur son fonctionnement.
@@ -17,16 +17,17 @@ Cette release introduit les fonctionnalités d'authentification sécurisée pour
 ## Feuille de Route
 
 ### Fonctionnalités en Développement 🚧
+
 - [ ] Amélioration de la Stratégie d'Authentification 🚧
   - Optimisation des mécanismes d'authentification pour renforcer la sécurité et améliorer l'expérience utilisateur.
 
-- [ ] Gestion de l'Utilisateur 🚧
+- [ ] ~~*Gestion de l'Utilisateur*~~
   - Mise à jour des informations utilisateur sur la page de profil pour permettre une personnalisation et une gestion plus intuitive.
 
-- [ ] Intégration Swagger
+- [ ] ~~*Intégration Swagger*~~
   - Ajout de Swagger pour la documentation des API afin de faciliter le développement et les tests.
 
-- [ ] Intégration Traduction Api
+- [ ] ~~*Intégration Traduction Api*~~
   - Ajout d'un stratégie de traduction pour les différentes langues piloter depuis un front.
 
 ### Fonctionnalités à Venir 🌟
@@ -36,6 +37,7 @@ Cette release introduit les fonctionnalités d'authentification sécurisée pour
   
 - [ ] Intégration de la Sécurité
   - Vérification de compte pour renforcer la sécurité, y compris la mise en œuvre de la vérification par email et d'autres méthodes d'authentification.
+  - Génération code de sécurité pour la vérification par email.
 
 
 ### Fonctionnalités principales :
@@ -206,7 +208,7 @@ Assurez-vous également de configurer correctement votre base de données selon 
 ### English
 A harmonious technology stack, offering full compatibility between different layers.
 
-## Release v1.0.1
+## Release v1.0.2
 
 ### Description
 This release introduces secure authentication features for the HarmonyStack project, along with explanations of its operation.
@@ -217,13 +219,13 @@ This release introduces secure authentication features for the HarmonyStack proj
 - [ ] Authentication Strategy Improvement 🚧
   - Optimization of authentication mechanisms to enhance security and improve user experience.
 
-- [ ] User Management 🚧
+- [ ] ~~*User Management*~~
   - Updating user information on the profile page to enable more intuitive customization and management.
 
-- [ ] Swagger Integration
+- [ ] ~~*Swagger Integration*~~
   - Adding Swagger for API documentation to facilitate development and testing.
 
-- [ ] Translation API Integration
+- [ ] ~~*Translation API Integration*~~
   - Adding a translation API strategy to enable language translation from a front.
   
   
@@ -234,6 +236,7 @@ This release introduces secure authentication features for the HarmonyStack proj
   
 - [ ] Security Integration
   - Account verification to enhance security, including the implementation of email verification and other authentication methods.
+  - Code generation for email verification.
 
 
 

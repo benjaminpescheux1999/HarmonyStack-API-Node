@@ -1,6 +1,6 @@
 import { Schema, model, Document } from 'mongoose';
 
-// Définition du schéma de l'utilisateur
+// Definition of the user schema
 export interface IUser extends Document {
     username: string;
     lastname: string;
@@ -19,13 +19,13 @@ const userSchema = new Schema<IUser>({
     updatedAt: { type: Date, default: Date.now }
 });
 
-//mettre à jour la date de modification
+// Update the modification date
 userSchema.pre('save', function (next) {
     this.updatedAt = new Date();
     next();
 });
 
-// Création du modèle User à partir du schéma
+// Creation of the User model from the schema
 const User = model<IUser>('User', userSchema);
      
 
