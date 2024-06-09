@@ -67,7 +67,7 @@ export const updateUser = async (req: Request & { user?: any, t?:any }, res: Res
 
       // Check if the password is correct
       
-      if (password || password!=='' || (passport && password.length < 8) ) {
+      if (password || password!=='' || (password && password.length < 8) ) {
         if (!old_password || old_password === '') {
           res.status(400).send({ error: t('old_password_required'), label: 'old_password'});
           return;

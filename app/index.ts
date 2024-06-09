@@ -5,6 +5,7 @@ import http from 'http';
 import userRouter from '../app/routes/user.route';
 import stadiumRouter from '../app/routes/stadium.route';
 import authRouter from '../app/routes/auth.route'
+import notificationRouter from '../app/routes/notification.route'
 import bodyParser from 'body-parser';
 
 //Swagger - documentation
@@ -115,3 +116,5 @@ app.use(i18nextMiddleware.handle(i18next));
 app.use('/api/v1', userRouter);
 app.use('/api/v1', stadiumRouter);
 app.use('/api/v1', authRouter);
+app.use('/api/v1', notificationRouter);
+

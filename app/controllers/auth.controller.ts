@@ -11,10 +11,10 @@ export const loginUser = async (req: Request & { t?:any }, res: Response, next: 
     const t = req.t;
     passport.authenticate('local', { session: false }, async (err: Error, user: { _id: string; }, info: { message: any; }) => {
         if (err) {
-            return res.status(500).send({ error: t('authentication_error') });
+            return res.status(500).send({ message: t('authentication_error') });
         }
         if (!user) {
-            return res.status(400).send({ error: info && info.message ? info.message : t('authentication_failed') });
+            return res.status(400).send({ message: info && info.message ? info.message : t('authentication_failed') });
         }
         /* Create the CSRF token */
         const xsrfToken = await generateXsrfToken();
@@ -62,7 +62,6 @@ export const refreshToken = async (req: Request & { t?:any }, res: Response) => 
             return res.status(401).send({ message: t('refresh_token_required') });
         }
         const refreshToken = cookies.refresh_token;
-        console.log("refreshToken",refreshToken);
         const validrefresh = await RefreshToken.findOne({ refreshToken });
         if (!validrefresh) {
             return res.status(401).send({ message: t('invalid_refresh_token') });
@@ -108,9 +107,11 @@ export const refreshToken = async (req: Request & { t?:any }, res: Response) => 
 
 export const signup = async (req: Request & {t?:any}, res: Response) => {
     const t = req.t;
-    const { email, password, firstname, lastname, passwordConfirmation } = req.body;
+    const { email, password, username, lastname, passwordConfirmation } = req.body;
+    console.log("req.body",req.body);
     
-    if (!email || !password || !firstname || !lastname || !passwordConfirmation) {
+    
+    if (!email || !password || !username || !lastname || !passwordConfirmation) {
         return res.status(400).send({ message: t('all_fields_required') });
     }
     if (password !== passwordConfirmation) {
@@ -128,11 +129,47 @@ export const signup = async (req: Request & {t?:any}, res: Response) => {
         const newUser = new User({
             email,
             password: hashedPassword,
-            username:firstname,
+            username:username,
             lastname,
         });
+
+        /* Create the CSRF token */
+        const xsrfToken = await generateXsrfToken();
+         /* Create the JWT with the CSRF token in the payload */
+        const accessToken = jwt.sign({ sub: newUser._id, xsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
+
+        const refreshToken = await generateBase64RefreshToken();
+
         const savedUser = await newUser.save();
-        return res.status(201).send(savedUser);
+        //add refresh token 
+        const query = { userId: newUser._id };
+        const update = { $set: { refreshToken: refreshToken, expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }};
+        const options = { upsert: true };
+        await RefreshToken.updateOne(query, update, options);
+
+        const includeUserFields = ['_id', 'username', 'lastname', 'email'];
+        const userInfos = await User.findById(newUser._id, includeUserFields);
+
+        res.cookie('access_token', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1 * 60 * 60 * 1000, //1 hour
+            sameSite: 'strict',
+            path: '/',
+        }).cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 365 * 24 * 60 * 60 * 1000, //1 year
+            path: '/',
+            sameSite: 'strict'
+        })
+        .send({
+            accessTokenExpiresIn: 24 * 60 * 60 * 1000, //1 day
+            refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000, //1 year
+            xsrfToken,
+            user:userInfos
+          })
+        // return res.status(201).send(savedUser);
     } catch (error) {
         console.error(error);
         return res.status(500).send({ message: t('error_creating_user') });

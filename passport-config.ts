@@ -3,13 +3,15 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { User } from './app/models/index.model';
 import bcrypt from 'bcrypt';
+import { Request } from 'express';
+
 
 // Configuration of the local strategy (username and password)
 passport.use(new LocalStrategy({
   usernameField: 'email', // The field used as username
   passwordField: 'password', // The field used as password
   passReqToCallback: true // Passes req to the callback
-}, async (req: any, email: string, password: string, done) => {
+}, async (req:Request & { t?:any } , email: string, password: string, done) => {
   const t = req.t;
   try {
       // Searching for the user in the database
@@ -17,7 +19,7 @@ passport.use(new LocalStrategy({
 
       // If the user is not found
       if (!user) {
-          return done(null, false, { message: t('middleware_auth.Login failed') });
+          return done(null, false, { message: t('middleware_auth.login_failed') });
       }
 
       // Password verification
