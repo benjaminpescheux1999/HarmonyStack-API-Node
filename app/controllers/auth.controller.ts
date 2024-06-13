@@ -110,7 +110,6 @@ export const signup = async (req: Request & {t?:any}, res: Response) => {
     const { email, password, username, lastname, passwordConfirmation } = req.body;
     console.log("req.body",req.body);
     
-    
     if (!email || !password || !username || !lastname || !passwordConfirmation) {
         return res.status(400).send({ message: t('all_fields_required') });
     }
@@ -118,9 +117,16 @@ export const signup = async (req: Request & {t?:any}, res: Response) => {
         return res.status(400).send({ message: t('passwords_do_not_match') });
     }
 
+    //start a session
+    const session = await User.startSession();
+    session.startTransaction();
+
     try {
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email }).session(session);
         if (existingUser) {
+            // if the email already exists, abort the transaction and end the session
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).send({ message: t('email_already_used') });
         }
 
@@ -129,23 +135,24 @@ export const signup = async (req: Request & {t?:any}, res: Response) => {
         const newUser = new User({
             email,
             password: hashedPassword,
-            username:username,
+            username: username,
             lastname,
         });
 
-        /* Create the CSRF token */
+        const savedUser = await newUser.save({ session });
+
         const xsrfToken = await generateXsrfToken();
          /* Create the JWT with the CSRF token in the payload */
         const accessToken = jwt.sign({ sub: newUser._id, xsrfToken }, String(process.env.JWT_SECRET), { expiresIn: '1h' });
-
         const refreshToken = await generateBase64RefreshToken();
 
-        const savedUser = await newUser.save();
-        //add refresh token 
         const query = { userId: newUser._id };
         const update = { $set: { refreshToken: refreshToken, expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }};
         const options = { upsert: true };
-        await RefreshToken.updateOne(query, update, options);
+        await RefreshToken.updateOne(query, update, options).session(session);
+        //commit the transaction
+        await session.commitTransaction();
+        session.endSession();
 
         const includeUserFields = ['_id', 'username', 'lastname', 'email'];
         const userInfos = await User.findById(newUser._id, includeUserFields);
@@ -167,10 +174,12 @@ export const signup = async (req: Request & {t?:any}, res: Response) => {
             accessTokenExpiresIn: 24 * 60 * 60 * 1000, //1 day
             refreshTokenExpiresIn: 365 * 24 * 60 * 60 * 1000, //1 year
             xsrfToken,
-            user:userInfos
-          })
-        // return res.status(201).send(savedUser);
+            user: userInfos
+        });
     } catch (error) {
+        //if there is an error, abort the transaction and end the session
+        await session.abortTransaction();
+        session.endSession();
         console.error(error);
         return res.status(500).send({ message: t('error_creating_user') });
     }
