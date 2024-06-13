@@ -157,6 +157,7 @@ Cette configuration est prévue pour une base de données MySQL (en cours de dé
   JWT_SECRET = "YOUR_JWT_SECRET"
   REFRESH_TOKEN_SECRET = "YOUR_REFRESH_TOKEN_SECRET"
   CLIENT_URL = "http://localhost:YOUR_CLIENT_PORT"
+  CLIENT_API_URL = "http://localhost:YOUR_API_PORT"
 ````
 
 BDD PostgreSQL 🚧 :
@@ -172,6 +173,7 @@ Cette configuration est prévue pour une base de données PostgreSQL (en cours d
   JWT_SECRET = "YOUR_JWT_SECRET"
   REFRESH_TOKEN_SECRET = "YOUR_REFRESH_TOKEN_SECRET"
   CLIENT_URL = "http://localhost:YOUR_CLIENT_PORT"
+  CLIENT_API_URL = "http://localhost:YOUR_API_PORT"
 ````
 
 

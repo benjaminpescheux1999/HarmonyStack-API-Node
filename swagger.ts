@@ -4,7 +4,7 @@ const options = {
   swaggerDefinition: {
     swagger: '2.0',
     // servers: [{ url: '/api' }],
-    host: 'localhost:5000',
+    host: process.env.CLIENT_API_URL,
     basePath: '/api/v1',    
     info: {
       title: 'HarmonyStack API-NodeJS',
