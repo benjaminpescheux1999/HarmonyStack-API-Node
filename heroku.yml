@@ -1,2 +1,6 @@
+build:
+  languages:
+    - nodejs
+
 run:
-  web: node app/index.ts
+  web: npm start
