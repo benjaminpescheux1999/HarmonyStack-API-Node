@@ -11,7 +11,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app/index.ts",
-    "start": "node app/dist/index.ts",
+    "start": "node app/dist/index.js",
     "build": "tsup app/index.ts --format cjs,esm --dts --ignore-watch .env"
   },
   "keywords": [],
