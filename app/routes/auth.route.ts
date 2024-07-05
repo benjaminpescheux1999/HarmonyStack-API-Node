@@ -84,6 +84,36 @@ router.post('/signup', signup);
 
 router.post('/refresh-token', refreshToken);
 
+/**
+ * @swagger
+ * /incommingcall:
+ *   post:
+ *     tags:
+ *       - Authentification
+ *     summary: Gérer un appel entrant
+ *     description: Enregistre les détails d'un appel entrant.
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *       description: Détails de l'appel entrant
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               callerId:
+ *                 type: string
+ *               callTime:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Appel entrant enregistré avec succès
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+
 router.post('/incommingcall', incommingcall);
 
 export default router;
