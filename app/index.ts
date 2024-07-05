@@ -61,41 +61,45 @@ app.use(express.urlencoded({ extended: true }));
 const server = http.createServer(app);
 
 // Function to wait for a certain delay
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+//const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Connection function with retry
-const connectWithRetry = async (retries: number, delay: number) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      await mongoose.connect(process.env.MONGODB_URI || '', {
-        serverSelectionTimeoutMS: 5000
-      });
-      console.log('Connected to MongoDB');
-      return;
-    } catch (error:any) {
-      console.error(`Error occurred while connecting to MongoDB (attempt ${i + 1}/${retries}):`, error.message);
-      if (i < retries - 1) {
-        console.log(`Retrying in ${delay / 1000} seconds...`);
-        await wait(delay);
-      }
-    }
-  }
-  throw new Error('Failed to connect to MongoDB after multiple attempts');
-};
+// const connectWithRetry = async (retries: number, delay: number) => {
+//   for (let i = 0; i < retries; i++) {
+//     try {
+//       await mongoose.connect(process.env.MONGODB_URI || '', {
+//         serverSelectionTimeoutMS: 5000
+//       });
+//       console.log('Connected to MongoDB');
+//       return;
+//     } catch (error:any) {
+//       console.error(`Error occurred while connecting to MongoDB (attempt ${i + 1}/${retries}):`, error.message);
+//       if (i < retries - 1) {
+//         console.log(`Retrying in ${delay / 1000} seconds...`);
+//         await wait(delay);
+//       }
+//     }
+//   }
+//   throw new Error('Failed to connect to MongoDB after multiple attempts');
+// };
 
 // Nombre de tentatives et délai entre les tentatives
-const maxRetries = 5; // nombre de tentatives
-const retryDelay = 5000; // délai en millisecondes
+// const maxRetries = 5; // nombre de tentatives
+// const retryDelay = 5000; // délai en millisecondes
 
-connectWithRetry(maxRetries, retryDelay)
-  .then(() => {
+// connectWithRetry(maxRetries, retryDelay)
+//   .then(() => {
+//     server.listen(process.env.PORT, () => {
+//       console.log(`Server is running on port ${process.env.PORT}`);
+//     });
+//   })
+//   .catch(error => {
+//     console.error('Could not start the server due to MongoDB connection issues:', error.message);
+//   });
+
     server.listen(process.env.PORT, () => {
       console.log(`Server is running on port ${process.env.PORT}`);
     });
-  })
-  .catch(error => {
-    console.error('Could not start the server due to MongoDB connection issues:', error.message);
-  });
 
 const options = {
   customSiteTitle: "HarmonyStack API Node",

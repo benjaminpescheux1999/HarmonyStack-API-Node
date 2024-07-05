@@ -198,3 +198,8 @@ export const logout = async (req: Request & {t?:any}, res: Response) => {
         return res.status(500).send({ message: t('logout_error') });
     }
 }
+
+export const incommingcall = async (req: Request, res: Response) => {
+    console.log("incommingcall", req.body);
+    return res.status(200).send({ message: "je ne sais pas" });
+}
